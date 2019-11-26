@@ -124,3 +124,46 @@ Differences between the wide and tidy formants
     -   one of the variables is stored in the header
 
 To use the tidyverse it is necesarry to wrangle the data into tidy format.
+
+#### Reshaping Data
+
+`library(tidyr)`
+
+`gather()` converts wide data to tidy data. By default `gather()` gathers all the columnts, therefore use the third argument to specify the columns. The first argument sets the name of the colum that will hold the variable that are currently kept in the wide data column names. The second argument sets the column name for the column that will hold the values in the column cells.
+
+Example:
+
+``` r
+new_tidy_data <- wide_data %>%
+  gather(year, fertility, `1960`:`2015`)
+
+# or
+
+new_tidy_data <- wide_data %>%
+  gather(year, fertility, -country)
+
+#`gather()` assumes that column names from the wide format are characters so they are converted to characters even if thery are integers. To avoid that it can be use `numeric()` or:
+
+new_tidy_data <- wide_data %>%
+  gather(year, fertility, -country, convert = TRUE)
+```
+
+`spread()` is the the inverse of gather. The first argument sets the variable that will be used as the column names. The second argument specifies which variables to use to fill out the cells.
+
+#### Separate and Unite
+
+The folloing chunk saves the path to the "extdata" dir from the dslabs package in the *path* variable, then it saves the full path to a data file saved in the the "extdata" dir to *filename* variable
+
+``` r
+path <- system.file("extdata", package = "dslabs")
+filename <- file.path(path, "life-expectancy-and-fertility-two-countries-example.csv")
+
+raw_dat <- read_csv(filename)
+select(raw_dat, 1:5)
+```
+
+`separate(data, c("coulmn_to_be_separated", "newly_separated_var", "auxiliary_column_for_leftovers_of_the_name"), sep = "_", fill = "right")` separates a column into multiple columns given a delimiting character ("\_" by default, and it is not necessary to include it as in the example). This is usefiul for example to separate column that has two variables. The number of the additional columns is set by the names of new columns given in the formula. If a column is to be separated into two but it contains character strings with more than one of the delimiting characters, the latter part of the variable will be lost because there are no columns to contain it.
+
+One approash is to add columns to contain the "leftovers" of the character strings that are being separated. In that case the cells of the additional columns that correspond to variables with less delimiting characters will be filled with NA. And then pipe the result into `unite()` function like this: `unite(var_name, newly_separated_var, auxiliary_column_for_leftovers_of_the_name, sep = "_") A better approach would be to use`separate(data, c("coulmn\_to\_be\_separated", "newly\_separated\_var"), sep = "\_", extra = "merge")
+
+Then `spread()` can be used on the column with second variable in order to convert its values to new variables in the header and distribute the values of the last column under those new variables.
