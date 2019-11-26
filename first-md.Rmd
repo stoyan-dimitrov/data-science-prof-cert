@@ -1,17 +1,15 @@
 ---
-title: "My First Markdown"
+title: "Wrangling"
 author: "Stoyan Dimitrov"
 date: "November 19, 2019"
 output: github_document
 ---
-# Wrangling
-## Data Import
-### Importing Spreadsheets
+# Data Import
+## Importing Spreadsheets
 Packages used are "readr" and "readxl". Spreadhseets can be created in text editors where nwe row is defined with a "return" and a column with a predefined special character (, ; "space" "tab"). Often the first row contains the column names. It is important to not if there is a header or not before import a file.
-###Paths and the Working Directory
-1. Know the location of the file to be imported in RStudio and the working directory of the R session.
 
-See working directory  
+##Paths and the Working Directory
+Know the location of the file to be imported in RStudio and the working directory of the R session. Check working directory  
 `getwd()`
 
 Change the working directory use:  
@@ -42,7 +40,7 @@ Copy file from dslabs package to your working directory
 Check if the file exists
 `file.exists(filename)`
 
-### The readr and readxl Packages
+## The readr and readxl Packages
 
 readr a tidyverse library that includes funcitons reading data stored in text file spreadsheets into R.
 
@@ -66,7 +64,7 @@ The function `excel_sheets` gives us the names of the sheets in an Excel file. T
 
 `read_lines("name_of_the_file", n_max = 3)` reads the first few lines of a file.
 
-### Importing Data Using R-base Functions
+## Importing Data Using R-base Functions
 
 `read.table` ; `read.csv`; `read.delim`
 
@@ -76,7 +74,7 @@ Differences with tidyverse:
 
 * characters are converted to factors (this can be avoided by using read.csv(filemane, **stringsAsFactors = FALSE**).
 
-### Downloading files from the internet
+## Downloading files from the internet
 
 Files can be read directly from the web instead from a local folder.  
 `any_file_name <- read_csv("url")`  
@@ -108,9 +106,9 @@ dat <- read_csv(url)
 download.file(url, "MyData.csv")
 ```
 
-## Tidy Data
-### Reshaping Data
-#### Tidy Data
+# Tidy Data
+## Reshaping Data
+### Tidy Data
 Each row represents one observation and each column represents a different variables that we have data on for those observations.
 
 Differences between the wide and tidy formants
@@ -121,7 +119,7 @@ Differences between the wide and tidy formants
 
 To use the tidyverse it is necesarry to wrangle the data into tidy format.
 
-#### Reshaping Data
+### Reshaping Data
 
 `library(tidyr)`
 
@@ -145,7 +143,7 @@ new_tidy_data <- wide_data %>%
 
 `spread()` is the the inverse of gather. The first argument sets the variable that will be used as the column names. The second argument specifies which variables to use to fill out the cells.
 
-#### Separate and Unite
+### Separate and Unite
 
 The folloing chunk saves the path to the "extdata" dir from the dslabs package in the *path* variable, then it saves the full path to a data file saved in the the "extdata" dir to *filename* variable
 

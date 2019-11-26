@@ -11,7 +11,11 @@ Data Import
 
 ### Importing Spreadsheets
 
-Packages used are "readr" and "readxl". Spreadhseets can be created in text editors where nwe row is defined with a "return" and a column with a predefined special character (, ; "space" "tab"). Often the first row contains the column names. It is important to not if there is a header or not before import a file. \#\#\#Paths and the Working Directory 1. Know the location of the file to be imported in RStudio and the working directory of the R session.
+Packages used are "readr" and "readxl". Spreadhseets can be created in text editors where nwe row is defined with a "return" and a column with a predefined special character (, ; "space" "tab"). Often the first row contains the column names. It is important to not if there is a header or not before import a file.
+
+### Paths and the Working Directory
+
+1.  Know the location of the file to be imported in RStudio and the working directory of the R session.
 
 See working directory
 `getwd()`
