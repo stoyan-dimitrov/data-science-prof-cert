@@ -13,4 +13,6 @@ https://rmarkdown.rstudio.com/lesson-1.html
 ## General
 https://bookdown.org/
 
-https://www.youtube.com/user/DataScienceDojo
+https://www.youtube.com/user/DataScienceDojo general data science source and... with a playlist on text mining
+
+https://stat545.com/ another online book about data science with R
