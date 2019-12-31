@@ -12,3 +12,5 @@ https://rmarkdown.rstudio.com/lesson-1.html
 
 ## General
 https://bookdown.org/
+
+https://www.youtube.com/user/DataScienceDojo
