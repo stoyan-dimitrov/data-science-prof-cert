@@ -1,0 +1,125 @@
+---
+title: "regression"
+author: "stoyan"
+date: "2/29/2020"
+output: html_document
+---
+
+Baseball
+
+batting average (BA)
+home run (HR)
+runs batted in (RBI)
+stolen bases (SB)
+strikeout by pitcher (SOA)
+fielding error (E)
+
+sabermetrics - the approach of using data to predict what outcomes best predict if a team wins
+
+In this course we will focus on predicting scoring runs (ignoring pitching and fielding athough useful). We will see h(ow regression analysis is used to develop strategies to build a competitive baseball team with a constrained budget. The approach can be divided into two separate data analysis: (1) where we determine which recorded player specific statistics predict runs; (2) where we examine if players were udervalued based on what our first analysys ptredicts.
+
+Baseball basics
+
+goal: score more runs (like poings)
+
+Each team has 9 batters that hit in a predetermined order, after the ninght batter hits, it's the 1st again
+
+Each time they come to bat it's called a plate appearance (PA)
+
+In each PA the opposite team pitcher throws the ball and the batter trys to hit it. If he fails it's an "out" and if he hits it he gets to run and he may score a run.
+
+Each team has nine tries to score a run - "innings", an inning ends after three outs.
+
+If a defender catches the ball - out
+
+there are 5 ways to succeed
+
+1. base on balls (BB) - when the pitcher does not pitch well and you get to go to first base
+2. single (1B) - hit and reach the first base
+3. double (2B) - hit and reach the second base
+4. triple (3B) - hit and reach the third base
+5. home run (HR) - hit and reach the home plate
+
+If you get to a base, you still have a chance of getting home and scoring a run if the next batter hits successfully.
+
+While on a base, you can also try to steal a base - run fast enough and try to go from first to second or from second to third without the other team tagging you.
+
+BA has been considered the most important offensive statistic historically.
+
+To define this average we define a hit (H) and an at bat (AB). Singles, doubles, triples, and home runs are hits (there is a fifth way to be successful without hitting the ball - base on balls - that's not a hit). At bat - the number of times to get a hit or make an out.
+
+BA = H / AB
+
+BA is refered to in thousands => 20% = .250
+
+Answer some basic questions using data
+
+Do teams that hit home runs score more runs?
+We look into data that goes from 1961 to 2001 in order to make a team in 2002. The visualization of choice when exploring the relationship between two variables like home runs and runs is a scatterplot
+
+```{r eval=FALSE}
+## Scatterplot of the relationship between HRs and wins
+
+library(Lahman)
+library(tidyverse)
+library(dslabs)
+ds_theme_set()
+
+Teams %>% filter(yearID %in% 1961:2001) %>%
+  mutate(HR_per_game = HR / G, R_per_game = R / G) %>%
+  ggplot(aes(HR_per_game, R_per_game)) +
+  geom_point(alpha = 0.5)
+
+```
+
+```{r eval=FALSE}
+## Scatterplot of the relationship between stolen bases and wins
+
+Teams %>% filter(yearID %in% 1961:2001) %>%
+  mutate(SB_per_game = SB / G, R_per_game = R / G) %>%
+  ggplot(aes(SB_per_game, R_per_game)) +
+  geom_point(alpha = 0.5)
+
+```
+
+```{r eval=FALSE}
+## Scatterplot of the relationship between bases on balls and wins
+
+Teams %>% filter(yearID %in% 1961:2001) %>%
+  mutate(HR_per_game = HR / G, R_per_game = R / G) %>%
+  ggplot(aes(HR_per_game, R_per_game)) +
+  geom_point(alpha = 0.5)
+
+```
+
+
+```{r eval=FALSE}
+## Scatterplot of the relationship between at bat and wins
+
+Teams %>% filter(yearID %in% 1961:2001) %>%
+  mutate(AB_per_game = AB / G, R_per_game = R / G) %>%
+  ggplot(aes(AB_per_game, R_per_game)) +
+  geom_point(alpha = 0.5)
+
+```
+
+```{r eval=FALSE}
+## Scatterplot of the relationship between fielding error and wins
+
+Teams %>% filter(yearID %in% 1961:2001) %>%
+  mutate(E_per_game = E / G, R_per_game = R / G) %>%
+  ggplot(aes(E_per_game, R_per_game)) +
+  geom_point(alpha = 0.5)
+
+```
+
+
+```{r eval=FALSE}
+## Scatterplot of the relationship between triples per game and doubles per game
+
+Teams %>% filter(yearID %in% 1961:2001) %>%
+  mutate(X3B_per_game = X3B / G, X2B_per_game = X2B / G) %>%
+  ggplot(aes(X3B_per_game, X2B_per_game)) +
+  geom_point(alpha = 0.5)
+
+```

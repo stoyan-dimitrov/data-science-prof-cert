@@ -8,7 +8,7 @@ output: github_document
 ## Importing Spreadsheets
 Packages used are "readr" and "readxl". Spreadsheets can be created in text editors where new row is defined with a "return" and a column with a predefined special character (, ; "space" "tab"). Often the first row contains the column names. It is important to not if there is a header or not before import a file.
 
-##Paths and the Working Directory
+## Paths and the Working Directory
 Know the location of the file to be imported in R Studio and the working directory of the R session. Check working directory  
 `getwd()`
 
@@ -161,5 +161,23 @@ One approach is to add columns to contain the "leftovers" of the character strin
 A better approach would be to use `separate(data, c("column_to_be_separated", "newly_separated_var"), sep = "_", extra = "merge")
 
 Then `spread()` can be used on the column with second variable in order to convert its values to new variables in the header and distribute the values of the last column under those new variables.
+
+# Joining tables
+
+`library(tidyverse)`
+`library(dslabs)`
+
+We want to explore the relationship between population size for US states and electoral votes. We have population size in:
+`data(murders)`
+`head(murders)`
+
+And we have the electoral votes in:
+`data(polls_us_election_2016)`
+`head(results_us_election_2016)`
+
+
+
+
+
 
 
