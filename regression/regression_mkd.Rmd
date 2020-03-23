@@ -2,8 +2,12 @@
 title: "regression"
 author: "stoyan"
 date: "2/29/2020"
-output: html_document
+output: github_document:
+    toc: true
+    toc_depth: 2
 ---
+# Introduction to Regression
+## Baseball as a Motivating Example
 
 Baseball
 
@@ -57,19 +61,21 @@ Answer some basic questions using data
 Do teams that hit home runs score more runs?
 We look into data that goes from 1961 to 2001 in order to make a team in 2002. The visualization of choice when exploring the relationship between two variables like home runs and runs is a scatterplot
 
-```{r eval=FALSE}
-## Scatterplot of the relationship between HRs and wins
-
+```{r}
 library(Lahman)
 library(tidyverse)
 library(dslabs)
 ds_theme_set()
+```
+
+
+```{r}
+## Scatterplot of the relationship between HRs and wins
 
 Teams %>% filter(yearID %in% 1961:2001) %>%
   mutate(HR_per_game = HR / G, R_per_game = R / G) %>%
   ggplot(aes(HR_per_game, R_per_game)) +
   geom_point(alpha = 0.5)
-
 ```
 
 ```{r eval=FALSE}
@@ -127,11 +133,12 @@ Teams %>% filter(yearID %in% 1961:2001) %>%
 # Corelation
 ## Corelation
 
-
-
-```{r eval=FALSE}
+```{r}
 library(HistData)
-library(tidyverse)
+```
+
+
+```{r}
 data("GaltonFamilies")
 galton_heights <- GaltonFamilies %>%
   filter(childNum == 1 & gender == "male") %>%
@@ -167,3 +174,290 @@ galton_heights %>% summarize(r = cor(father, son)) %>% pull(r)
 As with average and standard deviation, the sample correlation is the most commpnly used estimate of the populaiton correlation. This implies that the correlation we compute and use as a summary is a random variable. It tends to have pretty large standard error.
 Because the sample correlation si an average of independent deaws, the Central Limittheorem applies. Therefore, for a large enoughsample size N, the distribution of these Rs is approcimately normal. The expexted value is the populaiton correlation.
 The standard deviation is somehow more complex to derive.
+
+
+```{r eval=FALSE}
+# Load the Lahman library. Filter the Teams data frame to include years from 1961 to 2001. What is the correlation coefficient between number of runs per game and number of at bats per game?
+
+teams_61_01 %>% summarize(r2 = cor(R/G, AB/G)) %>% pull(r2)
+```
+
+
+```{r eval=FALSE}
+# What is the correlation coefficient between win rate (number of wins per game) and number of errors per game?
+
+teams_61_01 %>% summarize(r3 = cor(W/G, E/G)) %>% pull(r3)
+```
+
+
+```{r eval=FALSE}
+# What is the correlation coefficient between doubles (X2B) per game and triples (X3B) per game?
+
+teams_61_01 %>% summarize(r4 = cor(X2B/G, X3B/G)) %>% pull(r4)
+```
+
+## Stratification and Variance Explained
+### Anscombe's Quartet/Stratification
+Correlation is not always a good summary fo the relationship between two variables. As shown in the Anscombe's quartet, a set of artificial data sets, all the pairs have a correlation of 0.82 although, when seen, the scatterplots of the datasets do not necessarily present a correlation between the variables.
+
+To understand when correlation is a meaningful summary statistic we will try to predict the son's height using father's hight. this will help motivate and defie linear regression.
+
+We start by demonstrating how correlation can be useful for prediction.
+
+Suppose we are asked to guess the height of a randomly selected son. Because of the distribution of the son heihgt is approximately normal, we know that the average heihgt of 70.5 inches is a value with the highest proportion and would be the prediction with the chances of minimizing the error. But what if the father is 72 inches. That makes the father 1.14 SD taller than the average. Would then be the case that also the son is 1.14 SD from the average? (it will be an overestimate).
+A better approach would be to see all the sons with fathers who are about 72 inches. We do that by stratifying the father's height. We call this a conditional average since we are computing the average son heihght conditioned on the father being 72 inches tall.
+The challange when using this approach in practice is that we don't have many fathers that are exactly 72. In our data set, we only have eight.
+```{r eval=FALSE}
+# number of fathers with height 72 inches
+sum(galton_heights$father == 72)
+```
+If we change the number to 72.5 we would only have one father who is that height.
+```{r eval=FALSE}
+# number of fathers with height 72.5 inches
+sum(galton_heights$father == 72.5)
+```
+This would result in averages with large standard errors, and they won't be useful for prediction for this reason. But for now, what we'll do is we'll take an approach of creating strata of fathers with very similar heights. Specifically, we will round fathers' heights to the neares inch. This gives us the following prediction for the son of a gather that is approximately 72 inches tall. We can use this code and get our answer, which is 71.84.
+
+```{r eval=FALSE}
+# predicted height of a son with a 72 inch tall father
+
+conditional_avg <- galton_heights %>%
+  filter(round(father) == 72) %>%
+  summarize(avg = mean(son)) %>%
+  pull(avg)
+conditional_avg
+```
+
+Note that a 72 inch father is taller than average - specifically, 72 - 69.1/2.5 = 1.1 standard deviations taller than the average father. Our prediction 71.836 is also taller than average, but only 0.54 standard deviations larger than the average son. The sons of 72 inch fathers have regressed some to the average height. We notice that the reduction in how many SDs taller is about 0.5, which happens to be the correlation. As we will see in a later section, this is not a coincidence.
+If we want to make a prediction of any height, not just 72, we could apply the same approach to each strata. Stratification followed by boxplots lets us see the distribution of each group:
+galton_heights
+
+```{r}
+# stratify fathers' heights to make a boxplot of son heights
+
+galton_heights %>%
+  mutate(father_strata = factor(round(father))) %>%
+  ggplot(aes(father_strata, son)) +
+  geom_boxplot() +
+  geom_point()
+
+```
+
+Not surprisingly, the centers of the groups are increasing with height.
+
+```{r}
+# center of each boxplot
+galton_heights %>%
+  mutate(father = round(father)) %>%
+  group_by(father) %>%
+  summarize(son_conditional_avg = mean(son)) %>%
+  ggplot(aes(father, son_conditional_avg)) +
+  geom_point()
+```
+
+Now let's plot the standardized heights against each other, son versus father, with a line that has a slope equal to the correlation.
+
+```{r}
+r <- galton_heights %>% summarize(r = cor(father, son)) %>% .$r
+galton_heights %>%
+  mutate(father = round(father)) %>%
+  group_by(father) %>%
+  summarize(son = mean(son)) %>%
+  mutate(z_father = scale(father), z_son = scale(son)) %>%
+  ggplot(aes(z_father, z_son)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = r)
+```
+
+If we are predicting a random variable Y knowing the value of another X = x using a regression line, then we predict that for every standard deviation, σX, that x increases above the average µX, Y increase ρ standard deviations σY above the average µY with ρ the correlation between X and Y.
+If there is perfect correlation, the regression line predicts an increase that is the same number of SDs. If there is 0 correlation, then we don’t use x at all for the prediction and simply predict the average µY. For values between 0 and 1, the prediction is somewhere in between. If the correlation is negative, we predict a reduction instead of an increase.
+Note that if the correlation is positive and lower than 1, our prediction is closer, in standard units, to the average height than the value using to predict, x, is to the average of the xs. This is why we call it regression: the son regresses to the average height. In fact, the title of Galton’s paper was: Regression toward mediocrity in hereditary stature. To add regression lines to plots, we will need the above formula in the form:
+
+y = b + mx
+
+with slope m = ρ*(σy/σx
+and intercept b = µy − mµx
+  
+```{r}
+mu_x <- mean(galton_heights$father)
+mu_y <- mean(galton_heights$son)
+s_x <- sd(galton_heights$father)
+s_y <- sd(galton_heights$son)
+r <- cor(galton_heights$father, galton_heights$son)
+m <- r * s_y / s_x 
+b <- mu_y - m*mu_x
+
+galton_heights %>%
+  ggplot(aes(father, son)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(intercept = b, slope = m )
+```
+
+The regression formula implies that if we first standardize the variables, that is subtract the average and divide by the standard deviation, then the regression line has intercept 0 and slope equal to the correlation ρ. Here is the same plot, but using standard units:
+galton_heights
+
+```{r}
+galton_heights %>% ggplot(aes(scale(father), scale(son))) +
+  geom_point(alpha = 0.5) +
+  geom_abline(intercept = 0, slope = r)
+```
+
+### Bivariate normal distribution (advanced)
+
+A more technical way to define the bivariate normal distribution is the following: if X is a normally dis- tributed random variable, Y is also a normally distributed random variable, and the conditional distribution of Y for any X = x is approximately normal, then the pair is approximately bivariate normal.
+If we think the height data is well approximated by the bivariate normal distribution, then we should see the normal approximation hold for each strata. Here we stratify the son heights by the standardized father heights and see that the assumption appears to hold:
+
+```{r}
+galton_heights %>%
+  mutate(z_father = round((father - mean(father)) / sd(father))) %>%
+  filter(z_father %in% -2:2) %>%
+  ggplot() +
+  stat_qq(aes(sample = son)) +
+  facet_wrap( ~ z_father)
+```
+
+### Variance Explained
+The bivariate normal theory also tells us that the standard deviation of the *conditional* distribution described above is:
+
+$$SD(Y \mid X=x) = \sigma_{Y}\sqrt{1-\rho^{2}} $$
+
+To see why this is intuitive, notice that without conditioning, $SD(Y) = \sigma_{Y}$, we are looking at the variability of all the sons. But once we condition, we are only looking at the variability of the sons with a tall, 72 inch, father. This group will all tend to be somewhat tall so the standard deviation is reduced
+
+Specifically, it is reduced to $\sqrt{1-\rho^{2}} = \sqrt{1-0.25} = 0.86$ of what it was originally. We could say that the fathers height “explains” 14% of the sons height variability.
+
+The statement ‘X explains such and such percent of the variability’ is commonly used in academic papers. In this case, this percent actually refers to the variance (the SD squared). So if the data is bivariate normal, the variance is reduced by $1 − \rho^{2}$, so we say that X explains $1 − (1 − \rho^{2}) = \rho^{2}$ (the correlation squared) of the variance.
+
+But it is important to remember that the “variance explained” statement only makes sense when the data is approximated by a bivariate normal distribution.
+
+### Warning: there are two regression lines We
+
+We computed a regression line to predict the son’s height from father’s height. We used these calculations:
+
+```{r}
+mu_x <- mean(galton_heights$father)
+mu_y <- mean(galton_heights$son)
+s_x <- sd(galton_heights$father)
+s_y <- sd(galton_heights$son)
+r <- cor(galton_heights$father, galton_heights$son)
+m_1 <- r * s_y / s_x
+b_1 <- mu_y - m_1*mu_x
+```
+
+
+which gives us the function $E(Y \mid X=x)=38.8+0.44x$.
+
+What if we want to predict the father’s height based on the son’s? It is important to know that this is not determined by computing the inverse function: $x=\{E(Y \mid X=x)-38.8\}/0.4x$.
+
+We need to compute $E(X \mid Y=y)$. Since the data is approximately bivariate normal, the theory described above tells us that this conditional expectation will follow a line with slope and intercept:
+
+```{r}
+m_2 <- r * s_x / s_y
+b_2 <- mu_x - m_2*mu_y
+```
+
+So we get $E(X \mid Y=y)=45.2+0.35y$. Again we see regression to the average: the prediction for the father is closer to the father average than the son heights y is to the son average.
+
+Here is a plot showing the two regression lines:
+
+```{r}
+galton_heights %>%
+  ggplot(aes(father, son)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(intercept = b_1, slope = m_1, col = "blue") +
+  geom_abline(intercept = -b_2/m_2, slope = 1/m_2, col = "red")
+```
+
+with blue for the predicting son heights with father heights and red for predicting father heights with son heights.
+
+### Note
+
+When two variables follow a bivariate normal distribution, the variation explained can be calculated as: $\rho^{2} \times 100$. Therefore if the correlation between fathers' and sons' heights is $\rho=0.5$ 25% percent of the variation in sons' heights is explained by fathers' heights.
+
+## Assessment: Stratification and Variance Explained, Part 2
+
+In the second part of this assessment, you'll analyze a set of mother and daughter heights, also from GaltonFamilies.
+
+Define female_heights, a set of mother and daughter heights sampled from GaltonFamilies, as follows:
+
+```{r}
+set.seed(1989) #if you are using R 3.5 or earlier set.seed(1989, sample.kind="Rounding") if you are using R 3.6 or later
+
+library(HistData)
+data("GaltonFamilies")
+
+female_heights <- GaltonFamilies%>%     
+    filter(gender == "female") %>%     
+    group_by(family) %>%     
+    sample_n(1) %>%     
+    ungroup() %>%     
+    select(mother, childHeight) %>%     
+    rename(daughter = childHeight)
+```
+
+
+```{r}
+# Calculate the slope and intercept of the regression line predicting daughters' heights given mothers' heights. Given an increase in mother's height by 1 inch, how many inches is the daughter's height expected to change?
+
+mu_mom <- mean(female_heights$mother)
+mu_dtr <- mean(female_heights$daughter)
+s_mom <- sd(female_heights$mother)
+s_dtr <- sd(female_heights$daughter)
+r_f <- cor(female_heights$mother, female_heights$daughter)
+m_f <- r_f * s_dtr / s_mom 
+b_f <- mu_dtr - m_f*mu_mom
+```
+
+```{r}
+# What percent of the variability in daughter heights is explained by the mother's height?
+(r_f^2)*100
+```
+
+```{r}
+# What is the conditional expected value of her daughter's height given the mother's height?
+
+mu_dtr + r_f*s_dtr/s_mom*(60 - mu_mom)
+```
+
+# Linear Models
+
+## Introduction to Linear Models
+
+### Confounding: Are BBs More Predictive?
+
+```{r}
+# find regression line for predicting runs from BBs
+bb_slope <- Teams %>% 
+  filter(yearID %in% 1961:2001 ) %>% 
+  mutate(BB_per_game = BB/G, R_per_game = R/G) %>% 
+  lm(R_per_game ~ BB_per_game, data = .) %>% 
+  .$coef %>%
+  .[2]
+bb_slope
+```
+
+```{r}
+# compute regression line for predicting runs from singles
+singles_slope <- Teams %>% 
+  filter(yearID %in% 1961:2001 ) %>%
+  mutate(Singles_per_game = (H-HR-X2B-X3B)/G, R_per_game = R/G) %>%
+  lm(R_per_game ~ Singles_per_game, data = .) %>%
+  .$coef  %>%
+  .[2]
+singles_slope
+```
+
+Asociation is not causation, the reason might be confounding. Although it may appear that BB cause runs, it is actually the HR that cause most of these runs. We say that BB are confounded with HR.
+
+Let's note the correlation between HR, BB, and Singles.
+
+```{r}
+
+# calculate correlation between HR, BB and singles
+
+Teams %>%
+  filter(yearID %in% 1961:2001) %>%
+  mutate(Singles = (H-HR-X2B-X3B)/G, BB = BB/G, HR = HR/G) %>%
+  summarize(cor(BB, HR), cor(Singles, HR), cor(BB, Singles))
+```
+
+Regression can help us account for confounding.
